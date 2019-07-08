@@ -17,9 +17,15 @@ import asyncio
 bot_token = os.environ.get('MCBOT_TOKEN')
 message_database = {}
 
+
+class MCBot():
+    pass
+
+
 client = commands.Bot(command_prefix=commands.when_mentioned_or("mcbot "))
 
 
+# TODO: move updater somewhere to ServerListMessage (?) class
 async def message_updater():
     await client.wait_until_ready()
     while not client.is_closed():
@@ -66,6 +72,7 @@ async def on_ready():
     logger.info(f"Connected as {client.user}")
 
 
+# TODO: refactor commands to be in MCBot class, add Cogs
 @client.command("createmessage")
 async def create_message(ctx):
     global message_database
@@ -222,5 +229,6 @@ async def ping(ctx):
         f"Ping sent in guild:{msg.guild.id}  in channel:{msg.channel.id} with message:{ctx.message.id} with response id:{msg.id}")
 
 
+# TODO: think about better background task management
 client.loop.create_task(message_updater())
 client.run(bot_token)

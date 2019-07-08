@@ -11,6 +11,9 @@ from discord import Embed
 database_filename = 'database.json'
 
 
+class MCServer:
+    pass
+
 def remove_unused(db, guild, channel):
     if len(db[guild][channel]) == 0:
         db[guild].pop(channel)
@@ -18,6 +21,7 @@ def remove_unused(db, guild, channel):
             db.pop(guild)
 
 
+# TODO: encapsulate all server info into separate MCServer class
 def status_message_generator(server_list):
     embed = Embed()
     for server in server_list:
@@ -58,8 +62,7 @@ def status_message_generator(server_list):
                 playerlist_string += "__No players online__"
             else:
                 playerlist_string += "__Online players:__\n"
-                for each in playerlist.players.names:
-                    playerlist_string += each
+                playerlist_string += ", ".join(str(x) for x in playerlist.players.names)
         else:
             playerlist_string += "__Player list unavailable__"
         embed.add_field(
