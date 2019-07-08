@@ -133,7 +133,7 @@ async def remove_server(ctx):
 
             user_response = await client.wait_for('message', check=check)
             if user_response.content == "cancel":
-                ctx.channel.delete_messages(cleanup)
+                await ctx.channel.delete_messages(cleanup)
                 return
             cleanup.append(user_response)
             message_number = user_response.content
@@ -153,7 +153,7 @@ async def remove_server(ctx):
                             user_response = await client.wait_for('message', check=check)
                             cleanup.append(user_response)
                             if user_response.content == "cancel":
-                                ctx.channel.delete_messages(cleanup)
+                                await ctx.channel.delete_messages(cleanup)
                                 return
                             if user_response.content in message_database[guild][channel][message]:
                                 message_database[guild][channel][message].remove(user_response.content)
@@ -181,7 +181,7 @@ async def add_server(ctx):
 
         user_response = await client.wait_for('message', check=check)
         if user_response.content == "cancel":
-            ctx.channel.delete_messages(cleanup)
+            await ctx.channel.delete_messages(cleanup)
             return
         cleanup.append(user_response)
         if user_response.content.isdigit():
