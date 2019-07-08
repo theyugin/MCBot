@@ -82,16 +82,21 @@ async def remove_message(ctx):
     global message_database
     cleanup = [ctx.message]
     if not str(ctx.message.guild.id) in message_database:
-        await ctx.send("**No messages to delete in this server!**", delete_after=5)
+        await ctx.send("**No messages to delete in this guild!**", delete_after=5)
         await ctx.channel.delete_messages(cleanup)
+        return
     else:
         message_list_string, associated_messages = generate_message_link_list(message_database, ctx, client)
-        cleanup.append(await ctx.send("**Choose what message to delete:**\n" + message_list_string))
+        cleanup.append(
+            await ctx.send("**Choose what message to delete (type cancel to cancel):**\n" + message_list_string))
         while True:
             def check(m):
                 return m.author == ctx.author and m.channel == ctx.channel
 
             user_response = await client.wait_for('message', check=check)
+            if user_response.content == "cancel":
+                ctx.channel.delete_messages(cleanup)
+                return
             cleanup.append(user_response)
             message_number = user_response.content
             if message_number.isdigit():
@@ -111,10 +116,60 @@ async def remove_message(ctx):
                     return
 
 
+@client.command("removeserver")
+async def remove_server(ctx):
+    global message_database
+    cleanup = [ctx.message]
+    if not str(ctx.message.guild.id) in message_database:
+        await ctx.send("**No servers to delete in this guild!**", delete_after=5)
+        await ctx.channel.delete_messages(cleanup)
+    else:
+        message_list_string, associated_messages = generate_message_link_list(message_database, ctx, client)
+        cleanup.append(await ctx.send(
+            "**Choose what message to delete from (type cancel to cancel Pepega):**\n" + message_list_string))
+        while True:
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            user_response = await client.wait_for('message', check=check)
+            if user_response.content == "cancel":
+                ctx.channel.delete_messages(cleanup)
+                return
+            cleanup.append(user_response)
+            message_number = user_response.content
+            if message_number.isdigit():
+                guild, channel, message = associated_messages[int(message_number) - 1]
+                if int(message_number) > len(associated_messages) or int(message_number) < 1:
+                    await user_response.delete()
+                    cleanup.remove(user_response)
+                    await ctx.send(content="Wrong message number! Try again.", delete_after=5)
+                else:
+                    if len(message_database[guild][channel][message]) == 0:
+                        await ctx.send("No servers in this message! Try again.", delete_after=5)
+                    else:
+                        cleanup.append(await ctx.send(
+                            "**What server do you want to remove from this message? Type it's address:**"))
+                        while True:
+                            user_response = await client.wait_for('message', check=check)
+                            cleanup.append(user_response)
+                            if user_response.content == "cancel":
+                                ctx.channel.delete_messages(cleanup)
+                                return
+                            if user_response.content in message_database[guild][channel][message]:
+                                message_database[guild][channel][message].remove(user_response.content)
+                                write_database(message_database)
+                                await ctx.channel.delete_messages(cleanup)
+                                await ctx.send(
+                                    f"Removed server {user_response.content} from message #{message_number}!",
+                                    delete_after=5)
+                                return
+                            else:
+                                ctx.send("Wrong server address! Try again.", delete_after=5)
+
 @client.command("addserver")
 async def add_server(ctx):
     global message_database
-    response = "**What message do you want to add your server to?**\n"
+    response = "**What message do you want to add your server to? (type cancel to cancel)**\n"
     cleanup = [ctx.message]
     message_list_string, associated_messages = generate_message_link_list(message_database, ctx, client)
     response += message_list_string
@@ -125,23 +180,27 @@ async def add_server(ctx):
             return m.author == ctx.author and m.channel == ctx.channel
 
         user_response = await client.wait_for('message', check=check)
+        if user_response.content == "cancel":
+            ctx.channel.delete_messages(cleanup)
+            return
         cleanup.append(user_response)
-        tmp = user_response.content.split(" ")
-        if len(tmp) == 2:
-            message_number, server_address = tmp
-            if message_number.isdigit():
-                message_number = int(message_number)
-                if int(message_number) > len(associated_messages) or int(message_number) < 1:
-                    await user_response.delete()
-                    cleanup.remove(user_response)
-                    await ctx.send(content="Wrong message number! Try again.", delete_after=5)
-                else:
-                    guild, channel, message = associated_messages[message_number - 1]
-                    message_database[guild][channel][message].append(server_address)
-                    await ctx.channel.delete_messages(cleanup)
-                    await ctx.send(f"Added server {server_address} to #{message_number}!", delete_after=5)
-                    write_database(message_database)
-                    return
+        if user_response.content.isdigit():
+            message_number = int(user_response.content)
+            if int(message_number) > len(associated_messages) or int(message_number) < 1:
+                await user_response.delete()
+                cleanup.remove(user_response)
+                await ctx.send(content="Wrong message number! Try again.", delete_after=5)
+            else:
+                cleanup.append(await ctx.send("**Type server address to add to this message:**"))
+                user_response = await client.wait_for('message', check=check)
+                cleanup.append(user_response)
+                server_address = user_response.content
+                guild, channel, message = associated_messages[message_number - 1]
+                message_database[guild][channel][message].append(server_address)
+                await ctx.channel.delete_messages(cleanup)
+                await ctx.send(f"Added server {server_address} to #{message_number}!", delete_after=5)
+                write_database(message_database)
+                return
 
 
 @client.command("messages")
