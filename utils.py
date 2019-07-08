@@ -23,12 +23,12 @@ def status_message_generator(server_list):
         mcserver = mcs.MinecraftServer.lookup(server)
         try:
             status = mcserver.status()
-        except socket.timeout or socket.gaierror as e:
+        except (socket.gaierror, socket.timeout) as e:
             status = "-"
 
         try:
             playerlist = mcserver.query()
-        except socket.gaierror or socket.timeout as e:
+        except (socket.gaierror, socket.timeout) as e:
             playerlist = "-"
 
         if status == "-":
@@ -45,13 +45,17 @@ def status_message_generator(server_list):
                 description = status.description["text"]
         playerlist_string = "\n"
         if playerlist != '-':
-            for each in playerlist.players.names:
-                playerlist_string += each
+            if len(playerlist.players.names) == 0:
+                playerlist_string += "__No players online__"
+            else:
+                playerlist_string += "__Online players:__\n"
+                for each in playerlist.players.names:
+                    playerlist_string += each
         else:
-            playerlist_string = "Player list unavailable"
+            playerlist_string += "__Player list unavailable__"
         embed.add_field(
             name=f"{indicator} **{server}**\n{(description if status != '-' else '-')}",
-            value=f"{status.players.online}/{status.players.max + playerlist_string}" if status != '-' else "-"
+            value=f"{status.players.online}/{str(status.players.max) + playerlist_string}" if status != '-' else "-"
         )
     return embed
 
