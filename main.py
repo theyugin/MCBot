@@ -169,15 +169,15 @@ async def remove_server(ctx):
 @client.command("addserver")
 async def add_server(ctx):
     global message_database
-    response = "**What message do you want to add your server to? (type cancel to cancel)**\n"
     cleanup = [ctx.message]
-    message_list_string, associated_messages = generate_message_link_list(message_database, ctx, client)
-    response += message_list_string
-    cleanup.append(await ctx.send(response))
     if not str(ctx.message.guild.id) in message_database:
         await ctx.send("**No messages to add server to in this guild!**", delete_after=5)
         await ctx.channel.delete_messages(cleanup)
     else:
+        response = "**What message do you want to add your server to? (type cancel to cancel)**\n"
+        message_list_string, associated_messages = generate_message_link_list(message_database, ctx, client)
+        response += message_list_string
+        cleanup.append(await ctx.send(response))
         while True:
             def check(m):
                 return m.author == ctx.author and m.channel == ctx.channel
