@@ -2,6 +2,7 @@ import collections
 import copy
 import json
 import os
+import socket
 
 import mcstatus as mcs
 from discord import Embed
@@ -22,8 +23,14 @@ def status_message_generator(server_list):
         mcserver = mcs.MinecraftServer.lookup(server)
         try:
             status = mcserver.status()
-        except Exception as e:
+        except socket.timeout or socket.gaierror as e:
             status = "-"
+
+        try:
+            playerlist = mcserver.query()
+        except socket.gaierror or socket.timeout as e:
+            playerlist = "-"
+
         if status == "-":
             indicator = ":black_circle: "
             description = '-'
@@ -36,9 +43,15 @@ def status_message_generator(server_list):
                 description = status.description
             else:
                 description = status.description["text"]
+        playerlist_string = "\n"
+        if playerlist != '-':
+            for each in playerlist.players.names:
+                playerlist_string += each
+        else:
+            playerlist_string = "Player list unavailable"
         embed.add_field(
             name=f"{indicator} **{server}**\n{(description if status != '-' else '-')}",
-            value=f"{status.players.online}/{status.players.max}" if status != '-' else "-"
+            value=f"{status.players.online}/{status.players.max + playerlist_string}" if status != '-' else "-"
         )
     return embed
 

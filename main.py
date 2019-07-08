@@ -71,6 +71,7 @@ async def create_message(ctx):
     global message_database
     await ctx.message.delete()
     message = await ctx.send("New message created! Add some servers with `mcbot addserver` to be shown here.")
+    logging.info(f"Message created in {message.guild.id}:{message.channel.id}:{message.id}")
     new_message = {str(message.guild.id): {str(message.channel.id): {str(message.id): []}}}
     message_database = deep_dict_merge(message_database, new_message)
     write_database(message_database)
