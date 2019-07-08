@@ -1,5 +1,6 @@
 import collections
 import copy
+import errno
 import json
 import os
 import socket
@@ -25,11 +26,19 @@ def status_message_generator(server_list):
             status = mcserver.status()
         except (socket.gaierror, socket.timeout) as e:
             status = "-"
+        except socket.error as e:
+            status = "-"
+            if e.errno == errno.EPIPE:
+                print("Pipe error!")
 
         try:
             playerlist = mcserver.query()
         except (socket.gaierror, socket.timeout) as e:
             playerlist = "-"
+        except socket.error as e:
+            playerlist = "-"
+            if e.errno == errno.EPIPE:
+                print("Pipe error!")
 
         if status == "-":
             indicator = ":black_circle: "
